@@ -3,21 +3,24 @@ require 'active_support/inflector'
 require_relative './db_connection.rb'
 
 class AssocParams
+  attr_accessor :name, :other_class_name, :primary_key, :foreign_key
+
   def other_class
-    @name.constantize
+    @other_class_name.to_s.capitalize.constantize
   end
 
   def other_table
-    @name.constantize.table_name
+    other_class.table_name
   end
 end
 
 class BelongsToAssocParams < AssocParams
-  def initialize(name, params)
+
+  def initialize(name, params = {})
     @name             = name
-    @other_class_name = params[:class_name]  || name.camelize
+    @other_class_name = params[:class_name]  || name.to_s.camelize
     @primary_key      = params[:primary_key] || "id"
-    @foreign_key      = params[:foreign_key] || (name.camelize + '_id')
+    @foreign_key      = params[:foreign_key] || (name.to_s.underscore + '_id')
   end
 
   def type
@@ -37,18 +40,20 @@ module Associatable
   end
 
   def belongs_to(name, params = {})
+    settings = BelongsToAssocParams.new(name, params)
+
     self.send(:define_method, name.to_sym) do
 
-      search = DBConnection.execute(<<-SQL,
+      search = DBConnection.execute(<<-SQL, self.get(settings.foreign_key)
       SELECT
         *
-      FROM
-        "#{@table_name}"
+      FROM #{settings.other_table}
+      WHERE #{settings.other_table}.#{settings.primary_key} = ?
       SQL
       )
+      return nil if search.empty?
 
-      self.parse_all(search)
-
+      settings.other_class.new(search.first)
     end
   end
 

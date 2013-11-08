@@ -22,6 +22,10 @@ class MassObject
     @attributes
   end
 
+  def get(atr)
+    instance_variable_get("@#{atr}")
+  end
+
   # takes an array of hashes.
   # returns array of objects.
   def self.parse_all(results)
