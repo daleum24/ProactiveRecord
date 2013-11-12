@@ -29,6 +29,10 @@ end
 
 class HasManyAssocParams < AssocParams
   def initialize(name, params, self_class)
+    @name             = name
+    @other_class_name = params[:class_name]  || name.to_s.singularize.camelize
+    @primary_key      = params[:primary_key] || "id"
+    @foreign_key      = params[:foreign_key] || (self_class.underscore + '_id')
   end
 
   def type
@@ -58,8 +62,37 @@ module Associatable
   end
 
   def has_many(name, params = {})
+    settings = HasManyAssocParams.new(name, params, self)
+    
+    self.send(:define_method, name.to_sym) do
+      
+    search = DBConnection.execute(<<-SQL, self.get(settings.primary_key)
+    SELECT
+      *
+    FROM #{settings.other_table}
+    WHERE #{settings.other_table}.#{settings.foreign_key} = ?
+    SQL
+    )
+    return nil if search.empty?
+    
+    output = []
+    
+    search.each do |el|
+      output << settings.other_class.new(el)
+    end
+    
+    output
+    
+    end
   end
 
   def has_one_through(name, assoc1, assoc2)
   end
+  
+  
 end
+
+
+
+
+
