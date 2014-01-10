@@ -22,9 +22,6 @@ class BelongsToAssocParams < AssocParams
     @primary_key      = params[:primary_key] || "id"
     @foreign_key      = params[:foreign_key] || (name.to_s.underscore + '_id')
   end
-
-  def type
-  end
 end
 
 class HasManyAssocParams < AssocParams
@@ -33,9 +30,6 @@ class HasManyAssocParams < AssocParams
     @other_class_name = params[:class_name]  || name.to_s.singularize.camelize
     @primary_key      = params[:primary_key] || "id"
     @foreign_key      = params[:foreign_key] || (self_class.underscore + '_id')
-  end
-
-  def type
   end
 end
 
@@ -82,13 +76,11 @@ module Associatable
     end
     
     output
-    
     end
   end
 
-  def has_one_through(name, assoc1, assoc2)
-  end
-  
+  # def has_one_through(name, assoc1, assoc2)
+  # end
   
 end
 
